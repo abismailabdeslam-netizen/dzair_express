@@ -4,6 +4,14 @@ import { supabase } from '@/lib/supabase'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useRouter } from 'next/navigation'
 
+const COLOR_PRESETS = [
+  { label:'بني ذهبي', value:'#8B5E2A' }, { label:'أخضر',   value:'#2D7A4F' },
+  { label:'أزرق',     value:'#1B5E99' }, { label:'أحمر',    value:'#8B2A2A' },
+  { label:'بنفسجي',   value:'#5E2D7A' }, { label:'ذهبي',    value:'#7A5E1B' },
+  { label:'فيروزي',   value:'#1B7A7A' }, { label:'رمادي',   value:'#4A4A4A' },
+  { label:'وردي',     value:'#7A2D5E' }, { label:'زيتوني',  value:'#3D6B1B' },
+]
+
 const PRODUCT_COLORS = [
   { label:'أسود',  value:'#1a1a2e' }, { label:'أحمر',  value:'#e63946' },
   { label:'أخضر',  value:'#2a9d8f' }, { label:'ذهبي',  value:'#f4a261' },
@@ -46,10 +54,6 @@ export default function NewProductPage() {
   const [colorPreviews, setColorPreviews] = useState({})
   const [bannerFiles, setBannerFiles] = useState([null, null])
   const [bannerPreviews, setBannerPreviews] = useState([null, null])
-  
-  // 🆕 حقل الصورة الرئيسية
-  const [mainImageFile, setMainImageFile] = useState(null)
-  const [mainImagePreview, setMainImagePreview] = useState(null)
 
   const toggleColor = (c) => setSelectedColors(p => p.includes(c) ? p.filter(x=>x!==c) : [...p,c])
 
@@ -63,12 +67,6 @@ export default function NewProductPage() {
     if (!file) return
     const b = [...bannerFiles]; b[i] = file; setBannerFiles(b)
     const p = [...bannerPreviews]; p[i] = URL.createObjectURL(file); setBannerPreviews(p)
-  }
-
-  const handleMainImage = (file) => {
-    if (!file) return
-    setMainImageFile(file)
-    setMainImagePreview(URL.createObjectURL(file))
   }
 
   const uploadImg = async (file, path) => {
@@ -105,13 +103,6 @@ export default function NewProductPage() {
         }
       }
 
-      // 🆕 Upload main image
-      let mainImageUrl = null
-      if (mainImageFile) {
-        setProgress('رفع الصورة الرئيسية...')
-        mainImageUrl = await uploadImg(mainImageFile, `${ts}_main_${mainImageFile.name}`)
-      }
-
       setProgress('حفظ المنتج...')
       const { error } = await supabase.from('products').insert({
         name: form.name, description: form.description,
@@ -121,8 +112,7 @@ export default function NewProductPage() {
         colors: selectedColors, sizes, images,
         banner_images: bannerUrls,
         theme_color: form.theme_color,
-        is_active: form.is_active,
-        main_image: mainImageUrl   // 🆕 إضافة الصورة الرئيسية
+        is_active: form.is_active
       })
       if (error) throw error
       router.push('/dashboard-x7k2m9/panel/products')
@@ -150,39 +140,6 @@ export default function NewProductPage() {
           </Field>
         </Card>
 
-        {/* 🆕 بطاقة الصورة الرئيسية */}
-        <Card title="📸 صورة المنتج الرئيسية">
-          <p style={{ fontSize:'13px', color:'#6c757d', marginBottom:'16px' }}>
-            اختر صورة رئيسية للمنتج — ستظهر في الصفحة الرئيسية وفي بطاقة المنتج
-          </p>
-          <label style={{ display:'block', cursor:'pointer' }}>
-            <div style={{
-              border:`2px dashed ${mainImagePreview?'#2a9d8f':'#e9ecef'}`,
-              borderRadius:'14px', overflow:'hidden',
-              background:'#f8f9fa', minHeight:'200px',
-              display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'12px'
-            }}>
-              {mainImagePreview ? (
-                <img src={mainImagePreview} alt="معاينة" style={{ width:'100%', maxHeight:'300px', objectFit:'contain', display:'block' }} />
-              ) : (
-                <>
-                  <span style={{ fontSize:'48px' }}>🖼️</span>
-                  <span style={{ fontSize:'14px', color:'#6c757d', fontWeight:600 }}>
-                    اضغط لاختيار صورة
-                  </span>
-                </>
-              )}
-            </div>
-            <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => handleMainImage(e.target.files[0])} />
-          </label>
-          {mainImagePreview && (
-            <button onClick={() => { setMainImageFile(null); setMainImagePreview(null); }}
-              style={{ width:'100%', padding:'8px', marginTop:'8px', background:'none', border:'1px solid #e63946', borderRadius:'8px', color:'#e63946', fontSize:'13px', fontWeight:600, cursor:'pointer' }}>
-              ✕ إزالة الصورة
-            </button>
-          )}
-        </Card>
-
         <Card title="💰 الأسعار">
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>
             <Field label="السعر الحالي (دج) *">
@@ -194,41 +151,28 @@ export default function NewProductPage() {
           </div>
         </Card>
 
-        {/* 🎨 لون الثيم مع منتقي الألوان الكامل */}
+        {/* THEME COLOR */}
         <Card title="🎨 لون ثيم الصفحة">
           <p style={{ fontSize:'13px', color:'#6c757d', marginBottom:'16px' }}>
-            اختر أي لون تريده — سيصبح ثيم صفحة المنتج
+            كل صفحة المنتج ستأخذ هذا اللون — اختر ما يتناسب مع منتجك
           </p>
-          
-          <div style={{ display:'flex', alignItems:'center', gap:'16px', marginBottom:'16px', flexWrap:'wrap' }}>
-            <input 
-              type="color" 
-              value={form.theme_color} 
-              onChange={e => setForm(p => ({...p, theme_color: e.target.value}))}
-              style={{ 
-                width: '64px', 
-                height: '64px', 
-                border: '2px solid #e9ecef', 
-                borderRadius: '14px', 
-                cursor: 'pointer',
-                padding: '4px',
-                background: 'white'
-              }} 
-            />
-            <div style={{ flex:1 }}>
-              <input 
-                style={inp} 
-                value={form.theme_color} 
-                onChange={e => setForm(p => ({...p, theme_color: e.target.value}))}
-                placeholder="#8B5E2A"
-              />
-              <p style={{ fontSize:'11px', color:'#6c757d', marginTop:'4px' }}>
-                يمكنك كتابة كود اللون يدوياً (مثال: #FF5733)
-              </p>
-            </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:'10px', marginBottom:'16px' }}>
+            {COLOR_PRESETS.map(({label,value}) => (
+              <div key={value} onClick={()=>setForm(p=>({...p,theme_color:value}))}
+                style={{ cursor:'pointer', textAlign:'center', padding:'8px 4px', borderRadius:'12px', border:`2px solid ${form.theme_color===value?value:'#e9ecef'}`, background:form.theme_color===value?`${value}15`:'white' }}>
+                <div style={{ width:'32px', height:'32px', borderRadius:'50%', background:value, margin:'0 auto 6px', border:'2px solid white', boxShadow:'0 2px 6px rgba(0,0,0,0.15)' }} />
+                <span style={{ fontSize:'11px', fontWeight:600, color:'#6c757d' }}>{label}</span>
+              </div>
+            ))}
           </div>
-
-          <div style={{ marginTop:'14px', padding:'16px', borderRadius:'14px', background: form.theme_color + '15', border:`1px solid ${form.theme_color}40` }}>
+          <div style={{ display:'flex', alignItems:'center', gap:'12px', padding:'12px', background:'#f8f9fa', borderRadius:'12px' }}>
+            <label style={{ fontSize:'13px', fontWeight:700 }}>لون مخصص:</label>
+            <input type="color" value={form.theme_color} onChange={e=>setForm(p=>({...p,theme_color:e.target.value}))}
+              style={{ width:'48px', height:'36px', border:'2px solid #e9ecef', borderRadius:'8px', cursor:'pointer', padding:'2px' }} />
+            <span style={{ fontSize:'13px', color:'#6c757d' }}>{form.theme_color}</span>
+          </div>
+          {/* PREVIEW */}
+          <div style={{ marginTop:'14px', padding:'16px', borderRadius:'14px', background:form.theme_color+'15', border:`1px solid ${form.theme_color}40` }}>
             <p style={{ fontSize:'12px', color:'#6c757d', marginBottom:'8px', fontWeight:600 }}>معاينة سريعة:</p>
             <div style={{ display:'flex', gap:'8px', alignItems:'center', flexWrap:'wrap' }}>
               <div style={{ padding:'8px 20px', background:form.theme_color, color:'white', borderRadius:'50px', fontSize:'13px', fontWeight:700 }}>زر الطلب</div>
@@ -238,7 +182,7 @@ export default function NewProductPage() {
           </div>
         </Card>
 
-        {/* 🖼️ بانرات */}
+        {/* BANNERS */}
         <Card title="🖼️ صور البانر التسويقية">
           <p style={{ fontSize:'13px', color:'#6c757d', marginBottom:'16px' }}>
             ارفع صورك المصممة بفوتوشوب — ستظهر في أعلى صفحة المنتج
@@ -277,8 +221,8 @@ export default function NewProductPage() {
           </div>
         </Card>
 
-        {/* 🎨 ألوان المنتج (للمتغيرات) */}
-        <Card title="🎨 ألوان المنتج والصور">
+        {/* COLORS */}
+        <Card title="🎨 الألوان والصور">
           <p style={{ fontSize:'13px', color:'#6c757d', marginBottom:'16px' }}>اختر الألوان وارفع صورة لكل لون</p>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))', gap:'12px' }}>
             {PRODUCT_COLORS.map(({label,value}) => {
