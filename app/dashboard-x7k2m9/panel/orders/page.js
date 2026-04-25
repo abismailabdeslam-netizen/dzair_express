@@ -13,15 +13,45 @@ const statusMap = {
 export default function OrdersPage() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [updating, setUpdating] = useState(null)
   const [filter, setFilter] = useState('all')
+  const [lastRefresh, setLastRefresh] = useState(null)
 
-  useEffect(() => { fetchOrders() }, [])
+  useEffect(() => {
+    fetchOrders()
+
+    // اشتراك Realtime لاستقبال الطلبات الجديدة فوراً
+    const channel = supabase
+      .channel('orders-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setOrders(prev => [payload.new, ...prev])
+        } else if (payload.eventType === 'UPDATE') {
+          setOrders(prev => prev.map(o => o.id === payload.new.id ? payload.new : o))
+        } else if (payload.eventType === 'DELETE') {
+          setOrders(prev => prev.filter(o => o.id !== payload.old.id))
+        }
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [])
 
   const fetchOrders = async () => {
     setLoading(true)
-    const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false })
-    setOrders(data || [])
+    setError('')
+    const { data, error: err } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (err) {
+      setError('خطأ في تحميل الطلبات: ' + err.message)
+    } else {
+      setOrders(data || [])
+    }
+    setLastRefresh(new Date())
     setLoading(false)
   }
 
@@ -43,6 +73,30 @@ export default function OrdersPage() {
 
   return (
     <AdminLayout active="orders">
+      {/* Header with refresh */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+        <div>
+          <h1 style={{ fontSize: '20px', fontWeight: 900, marginBottom: '2px' }}>📋 الطلبات</h1>
+          {lastRefresh && <p style={{ fontSize: '11px', color: '#aaa' }}>آخر تحديث: {lastRefresh.toLocaleTimeString('fr-DZ')}</p>}
+        </div>
+        <button onClick={fetchOrders} disabled={loading} style={{
+          padding: '10px 18px', background: '#f8f9fa', border: '2px solid #e9ecef',
+          borderRadius: '12px', fontFamily: 'Cairo, sans-serif', fontSize: '13px',
+          fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
+        }}>
+          {loading ? '⏳' : '🔄'} تحديث
+        </button>
+      </div>
+
+      {error && (
+        <div style={{ background: '#fff0f0', border: '2px solid #e63946', borderRadius: '12px', padding: '14px 18px', marginBottom: '16px', color: '#e63946', fontWeight: 700, fontSize: '14px' }}>
+          ⚠️ {error}
+          <div style={{ fontSize: '12px', fontWeight: 400, marginTop: '6px', color: '#666' }}>
+            تأكد من أن جدول <strong>orders</strong> موجود في Supabase وأن الـ RLS مضبوط بشكل صحيح.
+          </div>
+        </div>
+      )}
+
       {/* Stats Filter */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '10px', marginBottom: '24px' }}>
         {[
@@ -92,11 +146,7 @@ export default function OrdersPage() {
                   </div>
 
                   <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '12px', marginBottom: '12px', fontSize: '13px' }}>
-<<<<<<< HEAD
                     {[['المنتج', o.product_name], ['الكمية', o.quantity], o.size && ['المقاس', o.size], o.color && ['اللون', o.color], o.delivery_type && ['التوصيل', o.delivery_type === 'home' ? '🏠 للمنزل' : '🏢 للمكتب']].filter(Boolean).map(([k, v]) => (
-=======
-                    {[['المنتج', o.product_name], ['الكمية', o.quantity], o.size && ['المقاس', o.size], o.color && ['اللون', o.color]].filter(Boolean).map(([k, v]) => (
->>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
                       <div key={k} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                         <span style={{ color: '#6c757d' }}>{k}:</span>
                         <span style={{ fontWeight: 700 }}>{v}</span>
