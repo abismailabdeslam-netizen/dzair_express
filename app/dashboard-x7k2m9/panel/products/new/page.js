@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useRouter } from 'next/navigation'
+import AIGenerator from '@/components/AIGenerator'  // ✅ إضافة مولد الذكاء الاصطناعي
 
 const PRODUCT_COLORS = [
   { label:'أسود',  value:'#1a1a2e' }, { label:'أحمر',  value:'#e63946' },
@@ -36,6 +37,7 @@ export default function NewProductPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState('')
+  const [showAI, setShowAI] = useState(false)  // ✅ حالة عرض نافذة الذكاء الاصطناعي
   const [form, setForm] = useState({
     name:'', description:'', price:'', old_price:'',
     stock:'100', sold:'0', sizes:'', is_active:true,
@@ -47,7 +49,7 @@ export default function NewProductPage() {
   const [bannerFiles, setBannerFiles] = useState([null, null])
   const [bannerPreviews, setBannerPreviews] = useState([null, null])
   
-  // 🆕 حقل الصورة الرئيسية
+  // صورة رئيسية
   const [mainImageFile, setMainImageFile] = useState(null)
   const [mainImagePreview, setMainImagePreview] = useState(null)
 
@@ -84,7 +86,7 @@ export default function NewProductPage() {
       const ts = Date.now()
       const sizes = form.sizes ? form.sizes.split(',').map(s=>s.trim()).filter(Boolean) : []
 
-      // Upload banner images
+      // رفع صور البانر
       const bannerUrls = []
       for (let i = 0; i < bannerFiles.length; i++) {
         if (bannerFiles[i]) {
@@ -94,7 +96,7 @@ export default function NewProductPage() {
         }
       }
 
-      // Upload color images
+      // رفع صور الألوان
       const images = []
       for (let i = 0; i < selectedColors.length; i++) {
         const file = colorImages[selectedColors[i]]
@@ -105,7 +107,7 @@ export default function NewProductPage() {
         }
       }
 
-      // 🆕 Upload main image
+      // رفع الصورة الرئيسية
       let mainImageUrl = null
       if (mainImageFile) {
         setProgress('رفع الصورة الرئيسية...')
@@ -122,7 +124,7 @@ export default function NewProductPage() {
         banner_images: bannerUrls,
         theme_color: form.theme_color,
         is_active: form.is_active,
-        main_image: mainImageUrl   // 🆕 إضافة الصورة الرئيسية
+        main_image: mainImageUrl
       })
       if (error) throw error
       router.push('/dashboard-x7k2m9/panel/products')
@@ -136,6 +138,19 @@ export default function NewProductPage() {
     <AdminLayout active="products">
       <div style={{ display:'flex', alignItems:'center', gap:'16px', marginBottom:'24px' }}>
         <button onClick={()=>router.back()} style={{ background:'none', border:'1px solid #e9ecef', padding:'8px 16px', borderRadius:'10px', fontFamily:'Cairo,sans-serif', fontSize:'13px', cursor:'pointer' }}>← رجوع</button>
+        {/* ✅ زر توليد الذكاء الاصطناعي */}
+        <button onClick={() => setShowAI(true)} style={{
+          marginRight: 'auto',
+          padding: '10px 20px',
+          background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '12px',
+          fontFamily: 'Cairo, sans-serif',
+          fontSize: '13px',
+          fontWeight: 700,
+          cursor: 'pointer'
+        }}>✨ ولّد بالذكاء الاصطناعي</button>
         <h2 style={{ fontSize:'18px', fontWeight:900 }}>إضافة منتج جديد</h2>
       </div>
 
@@ -150,7 +165,7 @@ export default function NewProductPage() {
           </Field>
         </Card>
 
-        {/* 🆕 بطاقة الصورة الرئيسية */}
+        {/* صورة رئيسية */}
         <Card title="📸 صورة المنتج الرئيسية">
           <p style={{ fontSize:'13px', color:'#6c757d', marginBottom:'16px' }}>
             اختر صورة رئيسية للمنتج — ستظهر في الصفحة الرئيسية وفي بطاقة المنتج
@@ -194,7 +209,7 @@ export default function NewProductPage() {
           </div>
         </Card>
 
-        {/* 🎨 لون الثيم مع منتقي الألوان الكامل */}
+        {/* لون الثيم */}
         <Card title="🎨 لون ثيم الصفحة">
           <p style={{ fontSize:'13px', color:'#6c757d', marginBottom:'16px' }}>
             اختر أي لون تريده — سيصبح ثيم صفحة المنتج
@@ -238,7 +253,7 @@ export default function NewProductPage() {
           </div>
         </Card>
 
-        {/* 🖼️ بانرات */}
+        {/* بانرات */}
         <Card title="🖼️ صور البانر التسويقية">
           <p style={{ fontSize:'13px', color:'#6c757d', marginBottom:'16px' }}>
             ارفع صورك المصممة بفوتوشوب — ستظهر في أعلى صفحة المنتج
@@ -277,7 +292,7 @@ export default function NewProductPage() {
           </div>
         </Card>
 
-        {/* 🎨 ألوان المنتج (للمتغيرات) */}
+        {/* ألوان المنتج */}
         <Card title="🎨 ألوان المنتج والصور">
           <p style={{ fontSize:'13px', color:'#6c757d', marginBottom:'16px' }}>اختر الألوان وارفع صورة لكل لون</p>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))', gap:'12px' }}>
@@ -356,6 +371,9 @@ export default function NewProductPage() {
           ⚠️ تأكد من وجود Storage Bucket باسم "products" في Supabase
         </p>
       </div>
+
+      {/* ✅ نافذة الذكاء الاصطناعي */}
+      {showAI && <AIGenerator onGenerated={(d) => setForm(p => ({...p, name: d.name, description: d.description, theme_color: d.theme_color}))} onClose={() => setShowAI(false)} />}
     </AdminLayout>
   )
 }
