@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { WILAYAS_COMMUNES, WILAYAS } from '@/lib/wilayas'
 
+<<<<<<< HEAD
 // أسعار التوصيل لكل ولاية (رمز الولاية: [توصيل للمنزل, توصيل للمكتب])
 const DELIVERY_PRICES = {
   '01 - أدرار': [1150, 850], '02 - الشلف': [800, 400], '03 - الأغواط': [900, 450],
@@ -26,12 +27,15 @@ const DELIVERY_PRICES = {
   '58 - المنيعة': [1000, 750],
 }
 
+=======
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
 const inp = {
   padding: '13px 16px', border: '2px solid #e9ecef', borderRadius: '12px',
   fontFamily: 'Cairo, sans-serif', fontSize: '14px', background: 'white',
   outline: 'none', width: '100%', color: '#1a1a2e', transition: 'border-color 0.2s'
 }
 
+<<<<<<< HEAD
 const COLOR_NAMES = {
   '#1a1a2e': 'أسود', '#e63946': 'أحمر', '#2a9d8f': 'أخضر', '#f4a261': 'ذهبي',
   '#457b9d': 'أزرق', '#6c757d': 'رمادي', '#ffffff': 'أبيض', '#8B4513': 'بني',
@@ -40,11 +44,16 @@ const COLOR_NAMES = {
 export default function OrderForm({ product, selectedColor, selectedSize }) {
   const [qty, setQty] = useState(1)
   const [deliveryType, setDeliveryType] = useState('home') // 'home' | 'office'
+=======
+export default function OrderForm({ product, selectedColor, selectedSize }) {
+  const [qty, setQty] = useState(1)
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
   const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', wilaya: '', commune: '' })
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
 
+<<<<<<< HEAD
   const productTotal = product.price * qty
   const deliveryPrices = form.wilaya ? (DELIVERY_PRICES[form.wilaya] || [0, 0]) : [0, 0]
   const homePrice = deliveryPrices[0]
@@ -52,13 +61,19 @@ export default function OrderForm({ product, selectedColor, selectedSize }) {
   const deliveryPrice = form.wilaya ? (deliveryType === 'home' ? homePrice : officePrice) : 0
   const grandTotal = productTotal + deliveryPrice
 
+=======
+  const total = product.price * qty
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
   const communes = form.wilaya ? (WILAYAS_COMMUNES[form.wilaya] || []) : []
 
   const handleWilayaChange = (wilaya) => {
     setForm(f => ({ ...f, wilaya, commune: '' }))
+<<<<<<< HEAD
     // إذا كان المكتب غير متاح (سعر 0) نرجع للمنزل
     const prices = DELIVERY_PRICES[wilaya] || [0, 0]
     if (prices[1] === 0) setDeliveryType('home')
+=======
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
   }
 
   const handleSubmit = async () => {
@@ -69,7 +84,10 @@ export default function OrderForm({ product, selectedColor, selectedSize }) {
     setError('')
     setLoading(true)
     try {
+<<<<<<< HEAD
       const colorName = selectedColor ? (COLOR_NAMES[selectedColor] || selectedColor) : null
+=======
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
       const { error: err } = await supabase.from('orders').insert({
         product_id: product.id,
         product_name: product.name,
@@ -78,12 +96,19 @@ export default function OrderForm({ product, selectedColor, selectedSize }) {
         phone: form.phone,
         wilaya: form.wilaya,
         commune: form.commune,
+<<<<<<< HEAD
         color: colorName,
         size: selectedSize || null,
         quantity: qty,
         total_price: grandTotal,
         delivery_type: deliveryType,
         delivery_price: deliveryPrice,
+=======
+        color: selectedColor || null,
+        size: selectedSize || null,
+        quantity: qty,
+        total_price: total,
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
         status: 'pending'
       })
       if (err) throw err
@@ -105,8 +130,11 @@ export default function OrderForm({ product, selectedColor, selectedSize }) {
     </div>
   )
 
+<<<<<<< HEAD
   const colorName = selectedColor ? (COLOR_NAMES[selectedColor] || selectedColor) : null
 
+=======
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
   return (
     <div style={{ background: '#f8f9fa', borderRadius: '20px', padding: '28px', border: '1px solid #e9ecef' }}>
       <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '20px' }}>📦 أكمل طلبك الآن</h3>
@@ -163,6 +191,7 @@ export default function OrderForm({ product, selectedColor, selectedSize }) {
         </select>
       </div>
 
+<<<<<<< HEAD
       {/* Delivery Type */}
       {form.wilaya && (
         <div style={{ marginBottom: '16px' }}>
@@ -193,6 +222,8 @@ export default function OrderForm({ product, selectedColor, selectedSize }) {
         </div>
       )}
 
+=======
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
       {/* Quantity */}
       <div style={{ marginBottom: '16px' }}>
         <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>الكمية</label>
@@ -203,6 +234,7 @@ export default function OrderForm({ product, selectedColor, selectedSize }) {
         </div>
       </div>
 
+<<<<<<< HEAD
       {/* Order Summary */}
       <div style={{ background: 'white', borderRadius: '14px', padding: '18px 20px', margin: '16px 0', border: '2px solid #e9ecef' }}>
         <div style={{ fontSize: '14px', fontWeight: 800, marginBottom: '12px', borderBottom: '1px solid #f0f0f0', paddingBottom: '10px' }}>📋 ملخص الطلب</div>
@@ -244,6 +276,12 @@ export default function OrderForm({ product, selectedColor, selectedSize }) {
           <span style={{ fontSize: '14px', fontWeight: 700, color: '#6c757d' }}>المجموع الإجمالي:</span>
           <span style={{ fontSize: '28px', fontWeight: 900, color: '#e63946' }}>{grandTotal.toLocaleString('fr-DZ')} دج</span>
         </div>
+=======
+      {/* Total */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', borderRadius: '14px', padding: '16px 20px', margin: '16px 0', border: '2px solid #e9ecef' }}>
+        <span style={{ fontSize: '14px', fontWeight: 700, color: '#6c757d' }}>المجموع الكلي:</span>
+        <span style={{ fontSize: '28px', fontWeight: 900 }}>{total.toLocaleString('fr-DZ')} دج</span>
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
       </div>
 
       {error && <p style={{ color: '#e63946', fontSize: '13px', marginBottom: '12px' }}>{error}</p>}

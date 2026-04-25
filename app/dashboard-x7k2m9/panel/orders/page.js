@@ -92,7 +92,11 @@ export default function OrdersPage() {
                   </div>
 
                   <div style={{ background: '#f8f9fa', borderRadius: '10px', padding: '12px', marginBottom: '12px', fontSize: '13px' }}>
+<<<<<<< HEAD
                     {[['المنتج', o.product_name], ['الكمية', o.quantity], o.size && ['المقاس', o.size], o.color && ['اللون', o.color], o.delivery_type && ['التوصيل', o.delivery_type === 'home' ? '🏠 للمنزل' : '🏢 للمكتب']].filter(Boolean).map(([k, v]) => (
+=======
+                    {[['المنتج', o.product_name], ['الكمية', o.quantity], o.size && ['المقاس', o.size], o.color && ['اللون', o.color]].filter(Boolean).map(([k, v]) => (
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
                       <div key={k} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                         <span style={{ color: '#6c757d' }}>{k}:</span>
                         <span style={{ fontWeight: 700 }}>{v}</span>

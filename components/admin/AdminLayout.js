@@ -7,7 +7,10 @@ const NAV = [
   { href: '/dashboard-x7k2m9/panel',          icon: '📊', label: 'نظرة عامة' },
   { href: '/dashboard-x7k2m9/panel/orders',   icon: '📋', label: 'الطلبات' },
   { href: '/dashboard-x7k2m9/panel/products', icon: '📦', label: 'المنتجات' },
+<<<<<<< HEAD
   { href: '/dashboard-x7k2m9/panel/reviews',  icon: '⭐', label: 'التقييمات' },
+=======
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
   { href: '/dashboard-x7k2m9/panel/settings', icon: '⚙️', label: 'الإعدادات' },
 ]
 

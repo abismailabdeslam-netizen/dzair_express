@@ -51,7 +51,11 @@ export default async function HomePage() {
 
       {/* Features Bar */}
       <div style={{ display: 'flex', background: 'white', borderBottom: '1px solid #e9ecef', overflowX: 'auto' }}>
+<<<<<<< HEAD
         {[['💳', 'دفع عند الاستلام'], ['✅', 'جودة مضمونة'], ['📞', 'تأكيد هاتفي'], ['🚚', 'توصيل لجميع الولايات']].map(([icon, text]) => (
+=======
+        {[['💳', 'دفع عند الاستلام'], ['🔄', 'إرجاع 7 أيام'], ['✅', 'جودة مضمونة'], ['📞', 'تأكيد هاتفي']].map(([icon, text]) => (
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
           <div key={text} style={{ flex: '1', minWidth: '100px', textAlign: 'center', padding: '12px 8px', borderLeft: '1px solid #e9ecef', fontSize: '12px', fontWeight: 600 }}>
             <div style={{ fontSize: '20px', marginBottom: '3px' }}>{icon}</div>
             {text}

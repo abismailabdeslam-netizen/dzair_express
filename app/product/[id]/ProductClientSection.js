@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+<<<<<<< HEAD
 import ProductReviews from './ProductReviews'
 import { WILAYAS_COMMUNES } from '@/lib/wilayas'
 
@@ -31,6 +32,9 @@ const COLOR_NAMES = {
   '#1a1a2e': 'أسود', '#e63946': 'أحمر', '#2a9d8f': 'أخضر', '#f4a261': 'ذهبي',
   '#457b9d': 'أزرق', '#6c757d': 'رمادي', '#ffffff': 'أبيض', '#8B4513': 'بني',
 }
+=======
+import ProductReviews from './ProductReviews' // 🆕 استيراد مكون التقييمات
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
 
 function hexToRgba(hex, alpha) {
   if (!hex || !hex.startsWith('#')) return `rgba(139,94,42,${alpha})`
@@ -142,7 +146,10 @@ export default function ProductClientSection({ product, settings, disc }) {
   const [phone, setPhone] = useState('')
   const [wilaya, setWilaya] = useState('')
   const [commune, setCommune] = useState('')
+<<<<<<< HEAD
   const [deliveryType, setDeliveryType] = useState('home')
+=======
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -150,11 +157,14 @@ export default function ProductClientSection({ product, settings, disc }) {
   const [showScroll, setShowScroll] = useState(false)
   const [hideSticky, setHideSticky] = useState(false)
 
+<<<<<<< HEAD
   const deliveryPrices = wilaya ? (DELIVERY_PRICES[wilaya] || [0, 0]) : [0, 0]
   const homeDeliveryPrice = deliveryPrices[0]
   const officeDeliveryPrice = deliveryPrices[1]
   const deliveryPrice = wilaya ? (deliveryType === 'home' ? homeDeliveryPrice : officeDeliveryPrice) : 0
 
+=======
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
   useEffect(() => {
     const handleScroll = () => setShowScroll(window.scrollY > 300)
     window.addEventListener('scroll', handleScroll)
@@ -172,8 +182,22 @@ export default function ProductClientSection({ product, settings, disc }) {
     return () => observer.disconnect()
   }, [])
 
+<<<<<<< HEAD
   const total = product.price * qty
   const grandTotal = total + deliveryPrice
+=======
+  const COMMUNES = {
+    '16 - الجزائر': ['الجزائر الوسط','باب الوادي','بلوزداد','الأبيار','بن عكنون','الدار البيضاء','بئر مراد رايس','الحراش','حسين داي','القبة','المرادية','بوزريعة','المحمدية'],
+    '31 - وهران': ['وهران','بطيوة','مرسى الكبير','أرزيو','طفراوي','بوتليليس','مسرغين'],
+    '25 - قسنطينة': ['قسنطينة','الخروب','أولاد رحمون','ديدوش مراد','حامة بوزيان','عين أبيد'],
+    '06 - بجاية': ['بجاية','أقبو','خراطة','سيدي عيش','تيشي','درقينة'],
+    '09 - البليدة': ['البليدة','أولاد يعيش','بوفاريك','الأربعاء','موزاية'],
+    '19 - سطيف': ['سطيف','عين أزال','قجال','بوقاعة','مزلوق'],
+    '05 - باتنة': ['باتنة','عين توتة','تازولت','أريس','نقاوس'],
+  }
+
+  const total = product.price * qty
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
 
   const handleSubmit = async () => {
     if (!fname || !phone || !wilaya || !commune) { setError('يرجى ملء جميع الحقول'); return }
@@ -181,6 +205,7 @@ export default function ProductClientSection({ product, settings, disc }) {
     try {
       const { createClient } = await import('@supabase/supabase-js')
       const client = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+<<<<<<< HEAD
       const colorName = selectedColor ? (COLOR_NAMES[selectedColor] || selectedColor) : null
       await client.from('orders').insert({
         product_id: product.id, product_name: product.name,
@@ -189,6 +214,13 @@ export default function ProductClientSection({ product, settings, disc }) {
         quantity: qty, total_price: grandTotal,
         delivery_type: deliveryType, delivery_price: deliveryPrice,
         status: 'pending'
+=======
+      await client.from('orders').insert({
+        product_id: product.id, product_name: product.name,
+        first_name: fname, last_name: '', phone, wilaya, commune,
+        color: selectedColor, size: selectedSize,
+        quantity: qty, total_price: total, status: 'pending'
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
       })
       setSuccess(true)
     } catch(e) { setError('حدث خطأ، حاول مجدداً') }
@@ -224,11 +256,15 @@ export default function ProductClientSection({ product, settings, disc }) {
       <div className="page-bg" />
 
       <div className="lp-wrap">
+<<<<<<< HEAD
         <div className="top-bar">
           {product.show_countdown !== false
             ? `⏰ عرض خاص ينتهي قريباً — الدفع عند الاستلام 🛒`
             : `🎁 عرض خاص محدود — الدفع عند الاستلام 🛒`}
         </div>
+=======
+        <div className="top-bar">🎁 عرض خاص محدود — الدفع عند الاستلام 🛒</div>
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
 
         {product.banner_images?.map((img, i) => img && (
           <div key={i} className="banner">
@@ -289,7 +325,11 @@ export default function ProductClientSection({ product, settings, disc }) {
           </div>
           <div className="input-row">
             <div className="inp-icon">🗺️</div>
+<<<<<<< HEAD
             <select style={inp} value={wilaya} onChange={e=>{setWilaya(e.target.value);setCommune('');const p=DELIVERY_PRICES[e.target.value]||[0,0];if(p[1]===0)setDeliveryType('home')}}>
+=======
+            <select style={inp} value={wilaya} onChange={e=>{setWilaya(e.target.value);setCommune('')}}>
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
               <option value="">اختر الولاية *</option>
               {WILAYAS.map(w=><option key={w}>{w}</option>)}
             </select>
@@ -298,7 +338,11 @@ export default function ProductClientSection({ product, settings, disc }) {
             <div className="inp-icon">📍</div>
             <select style={inp} value={commune} onChange={e=>setCommune(e.target.value)} disabled={!wilaya}>
               <option value="">{wilaya ? 'اختر البلدية *' : 'اختر الولاية أولاً'}</option>
+<<<<<<< HEAD
               {(WILAYAS_COMMUNES[wilaya]||[]).map(c=><option key={c}>{c}</option>)}
+=======
+              {(COMMUNES[wilaya]||[]).map(c=><option key={c}>{c}</option>)}
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
             </select>
           </div>
 
@@ -311,6 +355,7 @@ export default function ProductClientSection({ product, settings, disc }) {
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* Delivery Type */}
           {wilaya && (
             <div style={{ marginBottom:'18px' }}>
@@ -341,6 +386,8 @@ export default function ProductClientSection({ product, settings, disc }) {
             </div>
           )}
 
+=======
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
           {error && <p style={{ color:'#e63946', fontSize:'13px', marginBottom:'10px' }}>{error}</p>}
           <button id="mainOrderBtn" className="order-btn" onClick={handleSubmit} disabled={loading}>
             {loading ? '⏳ جاري الإرسال...' : 'اطلب الآن 🛒'}
@@ -361,6 +408,7 @@ export default function ProductClientSection({ product, settings, disc }) {
                     <div>
                       <div style={{ fontWeight:700, fontSize:'13px' }}>{product.name}</div>
                       {selectedColor && (
+<<<<<<< HEAD
                         <div style={{ fontSize:'12px', color:'#8B6B4A', display:'flex', alignItems:'center', gap:'5px', marginTop:'3px' }}>
                           <span>اللون:</span>
                           <span style={{ display:'inline-block', width:'13px', height:'13px', borderRadius:'50%', background:selectedColor, border:'1px solid #ccc', flexShrink:0 }}></span>
@@ -382,6 +430,24 @@ export default function ProductClientSection({ product, settings, disc }) {
                 <div className="sum-total">
                   <span style={{ fontWeight:700, fontSize:'14px' }}>المجموع الإجمالي</span>
                   <span style={{ fontSize:'22px', fontWeight:900 }}>{grandTotal.toLocaleString('fr-DZ')} دج</span>
+=======
+                        <div style={{ fontSize:'12px', color:'#8B6B4A', display:'flex', alignItems:'center', gap:'6px', marginTop:'4px' }}>
+                          <span>اللون:</span>
+                          <span style={{ display:'inline-block', width:'14px', height:'14px', borderRadius:'50%', background:selectedColor, border:'1px solid #ccc' }}></span>
+                        </div>
+                      )}
+                      {selectedSize && (
+                        <div style={{ fontSize:'12px', color:'#8B6B4A', marginTop:'2px' }}>المقاس: {selectedSize}</div>
+                      )}
+                      <div style={{ fontSize:'12px', color:'#8B6B4A', marginTop:'2px' }}>الكمية: x{qty}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontWeight:900, fontSize:'14px', color:c2 }}>{(qty*product.price).toLocaleString('fr-DZ')} دج</div>
+                </div>
+                <div className="sum-total">
+                  <span style={{ fontWeight:700, fontSize:'14px' }}>المجموع</span>
+                  <span style={{ fontSize:'22px', fontWeight:900 }}>{total.toLocaleString('fr-DZ')} دج</span>
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
                 </div>
               </div>
             </div>

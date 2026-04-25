@@ -24,8 +24,13 @@ export default function ProductCard({ product }) {
           background: 'linear-gradient(135deg, #f0f2f5, #e4e7eb)',
           position: 'relative', overflow: 'hidden', flexShrink: 0
         }}>
+<<<<<<< HEAD
           {(product.main_image || product.images?.[0]) ? (
             <Image src={product.main_image || product.images[0]} alt={product.name} fill style={{ objectFit: 'cover' }} />
+=======
+          {product.images?.[0] ? (
+            <Image src={product.images[0]} alt={product.name} fill style={{ objectFit: 'cover' }} />
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px' }}>🛍️</div>
           )}

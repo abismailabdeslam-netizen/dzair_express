@@ -9,7 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+<<<<<<< HEAD
     "@google/generative-ai": "^0.24.1",
+=======
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
     "@supabase/ssr": "^0.4.0",
     "@supabase/supabase-js": "^2.44.4",
     "lucide-react": "^1.7.0",

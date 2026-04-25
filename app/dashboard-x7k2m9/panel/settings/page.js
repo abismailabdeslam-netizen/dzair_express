@@ -33,7 +33,12 @@ export default function SettingsPage() {
     countdown_minutes: '47',
     store_name: 'Dzair Express',
     store_phone: '',
+<<<<<<< HEAD
     whatsapp_number: ''
+=======
+    whatsapp_number: '',        // جديد
+    messenger_username: ''      // جديد
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
   })
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -128,6 +133,27 @@ export default function SettingsPage() {
           </div>
         </div>
 
+<<<<<<< HEAD
+=======
+        {/* Messenger */}
+        <div>
+          <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+            <span style={{ color: '#0099FF' }}>●</span> اسم مستخدم ماسنجر (Facebook Page username)
+          </label>
+          <p style={{ fontSize: '12px', color: '#6c757d', marginBottom: '8px' }}>
+            أدخل اسم الصفحة فقط — مثال: ElYaqueenShop
+          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '44px', height: '44px', background: 'linear-gradient(135deg, #0099FF, #a033ff)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
+              <svg viewBox="0 0 24 24" fill="white" width="22" height="22">
+                <path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.652V24l4.088-2.242c1.092.3 2.246.464 3.443.464 6.627 0 12-4.975 12-11.111C24 4.974 18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8l3.131 3.259L19.752 8l-6.561 6.963z"/>
+              </svg>
+            </div>
+            <input style={inputStyle} placeholder="ElYaqueenShop" value={settings.messenger_username}
+              onChange={e => handleChange('messenger_username', e.target.value)} />
+          </div>
+        </div>
+>>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
       </Card>
 
       <button onClick={save} disabled={loading} style={{
