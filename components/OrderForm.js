@@ -1,12 +1,9 @@
-Output
-
 'use client'
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { WILAYAS_COMMUNES, WILAYAS } from '@/lib/wilayas'
 
-<<<<<<< HEAD
-// أسعار التوصيل لكل ولاية (رمز الولاية: [توصيل للمنزل, توصيل للمكتب])
+// ─── أسعار التوصيل لكل ولاية [منزل، مكتب] ───────────────────────────────────
 const DELIVERY_PRICES = {
   '01 - أدرار': [1150, 850], '02 - الشلف': [800, 400], '03 - الأغواط': [900, 450],
   '04 - أم البواقي': [700, 300], '05 - باتنة': [700, 300], '06 - بجاية': [700, 300],
@@ -29,281 +26,298 @@ const DELIVERY_PRICES = {
   '58 - المنيعة': [1000, 750],
 }
 
-=======
->>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
-const inp = {
-  padding: '13px 16px', border: '2px solid #e9ecef', borderRadius: '12px',
-  fontFamily: 'Cairo, sans-serif', fontSize: '14px', background: 'white',
-  outline: 'none', width: '100%', color: '#1a1a2e', transition: 'border-color 0.2s'
-}
-
-<<<<<<< HEAD
 const COLOR_NAMES = {
   '#1a1a2e': 'أسود', '#e63946': 'أحمر', '#2a9d8f': 'أخضر', '#f4a261': 'ذهبي',
   '#457b9d': 'أزرق', '#6c757d': 'رمادي', '#ffffff': 'أبيض', '#8B4513': 'بني',
 }
 
+// ─── حسابات الخصم ─────────────────────────────────────────────────────────────
+function calcDiscount(qty, rules) {
+  if (!rules || rules.length === 0) return null
+  return [...rules].sort((a, b) => b.minQty - a.minQty).find(r => qty >= r.minQty) || null
+}
+function getNextRule(qty, rules) {
+  if (!rules || rules.length === 0) return null
+  return [...rules].sort((a, b) => a.minQty - b.minQty).find(r => qty < r.minQty) || null
+}
+
+// ─── أنيميشن الشيمر ───────────────────────────────────────────────────────────
+const SHIMMER_CSS = `
+@keyframes dzShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes dzBounce {
+  0%,100% { transform: scale(1) rotate(0deg); }
+  25%      { transform: scale(1.18) rotate(-6deg); }
+  75%      { transform: scale(1.18) rotate(6deg); }
+}
+@keyframes dzPulse {
+  0%,100% { opacity:1; }
+  50%      { opacity:0.82; }
+}
+`
+
+// ─── مكوّن رسالة التخفيض (تحت الكمية مباشرة) ─────────────────────────────────
+function DiscountHint({ qty, rules, price }) {
+  const rule = calcDiscount(qty, rules)
+  const next = getNextRule(qty, rules)
+  if (!rules || rules.length === 0) return null
+
+  const isGift     = rule?.gift
+  const isFreeShip = rule?.freeShip
+  const pct        = rule?.pct || 0
+  const savedAmt   = rule ? Math.round(price * qty * pct / 100) : 0
+
+  let shimmer = false
+  let icon    = '🏷️'
+  let mainTxt = ''
+  let subTxt  = 'العرض محدود — استغل الفرصة الآن'
+  let saveTxt = ''
+  let bg      = 'rgba(108,117,125,0.10)'
+
+  if (!rule && next) {
+    const diff   = next.minQty - qty
+    const reward = next.gift ? '🎁 هدية' : next.freeShip ? '🚚 توصيل مجاني' : `خصم ${next.pct}%`
+    mainTxt = `أضف ${diff === 1 ? 'قطعة واحدة' : diff + ' قطع'} فقط للحصول على ${reward}!`
+  } else if (rule) {
+    shimmer = true
+    bg      = isGift ? 'rgba(212,130,10,0.92)' : 'rgba(45,122,79,0.92)'
+    icon    = isGift ? '🎁' : isFreeShip ? '🚚' : '🏷️'
+    mainTxt = isGift ? 'هدية مجانية + توصيل مجاني + خصم!'
+            : isFreeShip ? `توصيل مجاني + خصم ${pct}% مفعّل!`
+            : `خصم ${pct}% مفعّل على طلبك!`
+    subTxt  = `وفّرت ${savedAmt.toLocaleString('fr-DZ')} دج على هذا الطلب 🎉`
+    saveTxt = next ? `+${next.minQty - qty} للمزيد` : '🏆 أفضل عرض!'
+  }
+
+  if (!mainTxt) return null
+
+  return (
+    <div style={{ borderRadius:'12px', overflow:'hidden', marginTop:'10px', position:'relative', minHeight:'52px', display:'flex', alignItems:'center', background: bg }}>
+      {shimmer && (
+        <div style={{ position:'absolute', inset:0, zIndex:1,
+          background:'linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.28) 40%,rgba(255,255,255,0.38) 50%,rgba(255,255,255,0.28) 60%,transparent 100%)',
+          backgroundSize:'200% 100%', animation:'dzShimmer 2.5s infinite linear' }} />
+      )}
+      <div style={{ position:'relative', zIndex:2, display:'flex', alignItems:'center', gap:'10px', padding:'10px 14px', width:'100%' }}>
+        <div style={{ fontSize:'22px', flexShrink:0, animation: shimmer ? 'dzBounce 1.5s infinite ease-in-out' : 'none' }}>{icon}</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:'13px', fontWeight:900, color: shimmer ? 'white' : '#333', animation: shimmer ? 'dzPulse 2.5s infinite' : 'none' }}>{mainTxt}</div>
+          <div style={{ fontSize:'11px', fontWeight:600, marginTop:'2px', color: shimmer ? 'rgba(255,255,255,0.88)' : '#666' }}>{subTxt}</div>
+        </div>
+        {saveTxt && <div style={{ color:'white', fontSize:'13px', fontWeight:900, whiteSpace:'nowrap' }}>{saveTxt}</div>}
+      </div>
+    </div>
+  )
+}
+
+// ─── صف الملخص ───────────────────────────────────────────────────────────────
+function SumRow({ label, value, style = {} }) {
+  return (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px', fontSize:'13px', color:'#555', ...style }}>
+      <span>{label}</span><span style={{ fontWeight:700 }}>{value}</span>
+    </div>
+  )
+}
+
+// ─── الحقل المشترك ────────────────────────────────────────────────────────────
+const inp = {
+  padding:'13px 16px', border:'2px solid #e9ecef', borderRadius:'12px',
+  fontFamily:'Cairo, sans-serif', fontSize:'14px', background:'white',
+  outline:'none', width:'100%', color:'#1a1a2e', transition:'border-color 0.2s',
+}
+const focus = e => e.target.style.borderColor = '#e63946'
+const blur  = e => e.target.style.borderColor = '#e9ecef'
+
+// ─── المكوّن الرئيسي ──────────────────────────────────────────────────────────
 export default function OrderForm({ product, selectedColor, selectedSize }) {
-  const [qty, setQty] = useState(1)
-  const [deliveryType, setDeliveryType] = useState('home') // 'home' | 'office'
-=======
-export default function OrderForm({ product, selectedColor, selectedSize }) {
-  const [qty, setQty] = useState(1)
->>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
-  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', wilaya: '', commune: '' })
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState('')
+  const [qty,          setQty]          = useState(1)
+  const [deliveryType, setDeliveryType] = useState('home')
+  const [form,         setForm]         = useState({ firstName:'', lastName:'', phone:'', wilaya:'', commune:'' })
+  const [loading,      setLoading]      = useState(false)
+  const [success,      setSuccess]      = useState(false)
+  const [error,        setError]        = useState('')
 
-<<<<<<< HEAD
-  const productTotal = product.price * qty
-  const deliveryPrices = form.wilaya ? (DELIVERY_PRICES[form.wilaya] || [0, 0]) : [0, 0]
-  const homePrice = deliveryPrices[0]
-  const officePrice = deliveryPrices[1]
-  const deliveryPrice = form.wilaya ? (deliveryType === 'home' ? homePrice : officePrice) : 0
-  const grandTotal = productTotal + deliveryPrice
+  const rules      = product.discount_rules || []
+  const colorName  = selectedColor ? (COLOR_NAMES[selectedColor] || selectedColor) : null
+  const communes   = form.wilaya ? (WILAYAS_COMMUNES[form.wilaya] || []) : []
 
-=======
-  const total = product.price * qty
->>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
-  const communes = form.wilaya ? (WILAYAS_COMMUNES[form.wilaya] || []) : []
+  // حسابات السعر
+  const delPrices    = form.wilaya ? (DELIVERY_PRICES[form.wilaya] || [0, 0]) : [0, 0]
+  const homePrice    = delPrices[0]
+  const officePrice  = delPrices[1]
+  const activeRule   = calcDiscount(qty, rules)
+  const discPct      = activeRule?.pct || 0
+  const freeShip     = activeRule?.freeShip || false
+  const hasGift      = activeRule?.gift || false
+  const subTotal     = product.price * qty
+  const discAmt      = Math.round(subTotal * discPct / 100)
+  const rawDelivery  = deliveryType === 'home' ? homePrice : officePrice
+  const deliveryAmt  = freeShip ? 0 : rawDelivery
+  const grandTotal   = subTotal - discAmt + deliveryAmt
 
-  const handleWilayaChange = (wilaya) => {
-    setForm(f => ({ ...f, wilaya, commune: '' }))
-<<<<<<< HEAD
-    // إذا كان المكتب غير متاح (سعر 0) نرجع للمنزل
-    const prices = DELIVERY_PRICES[wilaya] || [0, 0]
-    if (prices[1] === 0) setDeliveryType('home')
-=======
->>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
+  const handleWilayaChange = (w) => {
+    setForm(f => ({ ...f, wilaya: w, commune: '' }))
+    if ((DELIVERY_PRICES[w] || [0,0])[1] === 0) setDeliveryType('home')
   }
 
   const handleSubmit = async () => {
     if (!form.firstName || !form.lastName || !form.phone || !form.wilaya || !form.commune) {
-      setError('يرجى ملء جميع الحقول المطلوبة')
-      return
+      setError('يرجى ملء جميع الحقول المطلوبة'); return
     }
-    setError('')
-    setLoading(true)
+    setError(''); setLoading(true)
     try {
-<<<<<<< HEAD
-      const colorName = selectedColor ? (COLOR_NAMES[selectedColor] || selectedColor) : null
-=======
->>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
       const { error: err } = await supabase.from('orders').insert({
-        product_id: product.id,
-        product_name: product.name,
-        first_name: form.firstName,
-        last_name: form.lastName,
-        phone: form.phone,
-        wilaya: form.wilaya,
-        commune: form.commune,
-<<<<<<< HEAD
-        color: colorName,
-        size: selectedSize || null,
-        quantity: qty,
-        total_price: grandTotal,
-        delivery_type: deliveryType,
-        delivery_price: deliveryPrice,
-=======
-        color: selectedColor || null,
-        size: selectedSize || null,
-        quantity: qty,
-        total_price: total,
->>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
-        status: 'pending'
+        product_id: product.id, product_name: product.name,
+        first_name: form.firstName, last_name: form.lastName,
+        phone: form.phone, wilaya: form.wilaya, commune: form.commune,
+        color: colorName, size: selectedSize || null,
+        quantity: qty, total_price: grandTotal,
+        delivery_type: deliveryType, delivery_price: deliveryAmt,
+        discount_pct: discPct, discount_amount: discAmt, has_gift: hasGift,
+        status: 'pending',
       })
       if (err) throw err
       setSuccess(true)
-    } catch (e) {
-      setError('حدث خطأ، حاول مجدداً')
-    } finally {
-      setLoading(false)
-    }
+    } catch { setError('حدث خطأ، حاول مجدداً') }
+    finally   { setLoading(false) }
   }
 
   if (success) return (
-    <div style={{ background: 'white', borderRadius: '20px', padding: '48px 32px', textAlign: 'center', border: '1px solid #e9ecef', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
-      <div style={{ fontSize: '72px', marginBottom: '20px' }}>✅</div>
-      <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#2a9d8f', marginBottom: '12px' }}>تم إرسال طلبك!</h2>
-      <p style={{ color: '#6c757d', lineHeight: 1.7 }}>
+    <div style={{ background:'white', borderRadius:'20px', padding:'48px 32px', textAlign:'center', border:'1px solid #e9ecef', boxShadow:'0 4px 24px rgba(0,0,0,0.08)' }}>
+      <div style={{ fontSize:'72px', marginBottom:'20px' }}>✅</div>
+      <h2 style={{ fontSize:'24px', fontWeight:900, color:'#2a9d8f', marginBottom:'12px' }}>تم إرسال طلبك!</h2>
+      <p style={{ color:'#6c757d', lineHeight:1.7 }}>
         شكراً لك! سنتصل بك قريباً على الرقم <strong>{form.phone}</strong> لتأكيد الطلب وتحديد موعد التوصيل 🚚
       </p>
     </div>
   )
 
-<<<<<<< HEAD
-  const colorName = selectedColor ? (COLOR_NAMES[selectedColor] || selectedColor) : null
-
-=======
->>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
   return (
-    <div style={{ background: '#f8f9fa', borderRadius: '20px', padding: '28px', border: '1px solid #e9ecef' }}>
-      <h3 style={{ fontSize: '18px', fontWeight: 900, marginBottom: '20px' }}>📦 أكمل طلبك الآن</h3>
+    <>
+      <style>{SHIMMER_CSS}</style>
+      <div style={{ background:'#f8f9fa', borderRadius:'20px', padding:'28px', border:'1px solid #e9ecef' }}>
+        <h3 style={{ fontSize:'18px', fontWeight:900, marginBottom:'20px' }}>📦 أكمل طلبك الآن</h3>
 
-      {/* Name Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
-        <div>
-          <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>الاسم <span style={{ color: '#e63946' }}>*</span></label>
-          <input style={inp} placeholder="محمد" value={form.firstName}
-            onChange={e => setForm({ ...form, firstName: e.target.value })}
-            onFocus={e => e.target.style.borderColor = '#e63946'}
-            onBlur={e => e.target.style.borderColor = '#e9ecef'} />
+        {/* الاسم واللقب */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px', marginBottom:'14px' }}>
+          {[['firstName','الاسم','محمد'],['lastName','اللقب','بن علي']].map(([key,label,ph]) => (
+            <div key={key}>
+              <label style={{ fontSize:'13px', fontWeight:700, display:'block', marginBottom:'6px' }}>{label} <span style={{ color:'#e63946' }}>*</span></label>
+              <input style={inp} placeholder={ph} value={form[key]}
+                onChange={e => setForm({ ...form, [key]: e.target.value })}
+                onFocus={focus} onBlur={blur} />
+            </div>
+          ))}
         </div>
-        <div>
-          <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>اللقب <span style={{ color: '#e63946' }}>*</span></label>
-          <input style={inp} placeholder="بن علي" value={form.lastName}
-            onChange={e => setForm({ ...form, lastName: e.target.value })}
-            onFocus={e => e.target.style.borderColor = '#e63946'}
-            onBlur={e => e.target.style.borderColor = '#e9ecef'} />
+
+        {/* الهاتف */}
+        <div style={{ marginBottom:'14px' }}>
+          <label style={{ fontSize:'13px', fontWeight:700, display:'block', marginBottom:'6px' }}>رقم الهاتف <span style={{ color:'#e63946' }}>*</span></label>
+          <input style={inp} type="tel" placeholder="05XX XXX XXX" value={form.phone}
+            onChange={e => setForm({ ...form, phone: e.target.value })} onFocus={focus} onBlur={blur} />
         </div>
-      </div>
 
-      {/* Phone */}
-      <div style={{ marginBottom: '14px' }}>
-        <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>رقم الهاتف <span style={{ color: '#e63946' }}>*</span></label>
-        <input style={inp} type="tel" placeholder="05XX XXX XXX" value={form.phone}
-          onChange={e => setForm({ ...form, phone: e.target.value })}
-          onFocus={e => e.target.style.borderColor = '#e63946'}
-          onBlur={e => e.target.style.borderColor = '#e9ecef'} />
-      </div>
-
-      {/* Wilaya */}
-      <div style={{ marginBottom: '14px' }}>
-        <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>الولاية <span style={{ color: '#e63946' }}>*</span></label>
-        <select style={inp} value={form.wilaya}
-          onChange={e => handleWilayaChange(e.target.value)}
-          onFocus={e => e.target.style.borderColor = '#e63946'}
-          onBlur={e => e.target.style.borderColor = '#e9ecef'}>
-          <option value="">اختر الولاية...</option>
-          {WILAYAS.map(w => <option key={w} value={w}>{w}</option>)}
-        </select>
-      </div>
-
-      {/* Commune */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>البلدية <span style={{ color: '#e63946' }}>*</span></label>
-        <select style={{ ...inp, opacity: !form.wilaya ? 0.5 : 1 }}
-          value={form.commune} disabled={!form.wilaya}
-          onChange={e => setForm({ ...form, commune: e.target.value })}
-          onFocus={e => e.target.style.borderColor = '#e63946'}
-          onBlur={e => e.target.style.borderColor = '#e9ecef'}>
-          <option value="">{form.wilaya ? 'اختر البلدية...' : 'اختر الولاية أولاً'}</option>
-          {communes.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
-
-<<<<<<< HEAD
-      {/* Delivery Type */}
-      {form.wilaya && (
-        <div style={{ marginBottom: '16px' }}>
-          <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '10px' }}>🚚 طريقة التوصيل <span style={{ color: '#e63946' }}>*</span></label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <button onClick={() => setDeliveryType('home')} style={{
-              padding: '12px 10px', borderRadius: '12px', border: `2px solid ${deliveryType === 'home' ? '#e63946' : '#e9ecef'}`,
-              background: deliveryType === 'home' ? 'rgba(230,57,70,0.06)' : 'white',
-              cursor: 'pointer', fontFamily: 'Cairo, sans-serif', textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '22px', marginBottom: '4px' }}>🏠</div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: deliveryType === 'home' ? '#e63946' : '#1a1a2e' }}>توصيل للمنزل</div>
-              <div style={{ fontSize: '14px', fontWeight: 900, color: '#e63946', marginTop: '4px' }}>{homePrice.toLocaleString('fr-DZ')} دج</div>
-            </button>
-            <button onClick={() => officePrice > 0 && setDeliveryType('office')} style={{
-              padding: '12px 10px', borderRadius: '12px', border: `2px solid ${deliveryType === 'office' ? '#e63946' : '#e9ecef'}`,
-              background: deliveryType === 'office' ? 'rgba(230,57,70,0.06)' : officePrice === 0 ? '#f8f9fa' : 'white',
-              cursor: officePrice === 0 ? 'not-allowed' : 'pointer', fontFamily: 'Cairo, sans-serif', textAlign: 'center',
-              opacity: officePrice === 0 ? 0.5 : 1
-            }}>
-              <div style={{ fontSize: '22px', marginBottom: '4px' }}>🏢</div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: deliveryType === 'office' ? '#e63946' : '#1a1a2e' }}>توصيل للمكتب</div>
-              <div style={{ fontSize: '14px', fontWeight: 900, color: '#e63946', marginTop: '4px' }}>
-                {officePrice > 0 ? `${officePrice.toLocaleString('fr-DZ')} دج` : 'غير متاح'}
-              </div>
-            </button>
-          </div>
+        {/* الولاية */}
+        <div style={{ marginBottom:'14px' }}>
+          <label style={{ fontSize:'13px', fontWeight:700, display:'block', marginBottom:'6px' }}>الولاية <span style={{ color:'#e63946' }}>*</span></label>
+          <select style={inp} value={form.wilaya} onChange={e => handleWilayaChange(e.target.value)} onFocus={focus} onBlur={blur}>
+            <option value="">اختر الولاية...</option>
+            {WILAYAS.map(w => <option key={w} value={w}>{w}</option>)}
+          </select>
         </div>
-      )}
 
-=======
->>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
-      {/* Quantity */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>الكمية</label>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <button onClick={() => setQty(q => Math.max(1, q - 1))} style={{ width: '42px', height: '42px', border: '2px solid #e9ecef', borderRadius: '10px', background: 'white', fontSize: '20px', fontWeight: 700, cursor: 'pointer', color: '#e63946', fontFamily: 'Cairo, sans-serif' }}>−</button>
-          <span style={{ fontSize: '22px', fontWeight: 900, minWidth: '36px', textAlign: 'center' }}>{qty}</span>
-          <button onClick={() => setQty(q => Math.min(10, q + 1))} style={{ width: '42px', height: '42px', border: '2px solid #e9ecef', borderRadius: '10px', background: 'white', fontSize: '20px', fontWeight: 700, cursor: 'pointer', color: '#e63946', fontFamily: 'Cairo, sans-serif' }}>+</button>
+        {/* البلدية */}
+        <div style={{ marginBottom:'16px' }}>
+          <label style={{ fontSize:'13px', fontWeight:700, display:'block', marginBottom:'6px' }}>البلدية <span style={{ color:'#e63946' }}>*</span></label>
+          <select style={{ ...inp, opacity: !form.wilaya ? 0.5 : 1 }}
+            value={form.commune} disabled={!form.wilaya}
+            onChange={e => setForm({ ...form, commune: e.target.value })} onFocus={focus} onBlur={blur}>
+            <option value="">{form.wilaya ? 'اختر البلدية...' : 'اختر الولاية أولاً'}</option>
+            {communes.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
         </div>
-      </div>
 
-<<<<<<< HEAD
-      {/* Order Summary */}
-      <div style={{ background: 'white', borderRadius: '14px', padding: '18px 20px', margin: '16px 0', border: '2px solid #e9ecef' }}>
-        <div style={{ fontSize: '14px', fontWeight: 800, marginBottom: '12px', borderBottom: '1px solid #f0f0f0', paddingBottom: '10px' }}>📋 ملخص الطلب</div>
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-          <span style={{ color: '#6c757d' }}>المنتج:</span>
-          <span style={{ fontWeight: 700, textAlign: 'left', maxWidth: '60%' }}>{product.name}</span>
-        </div>
-        {colorName && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-            <span style={{ color: '#6c757d' }}>اللون:</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ display: 'inline-block', width: '14px', height: '14px', borderRadius: '50%', background: selectedColor, border: '1px solid #ccc', flexShrink: 0 }}></span>
-              <span style={{ fontWeight: 700 }}>{colorName}</span>
+        {/* طريقة التوصيل */}
+        {form.wilaya && (
+          <div style={{ marginBottom:'16px' }}>
+            <label style={{ fontSize:'13px', fontWeight:700, display:'block', marginBottom:'10px' }}>🚚 طريقة التوصيل <span style={{ color:'#e63946' }}>*</span></label>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }}>
+              {[
+                { k:'home',   icon:'🏠', label:'توصيل للمنزل',  price: homePrice },
+                { k:'office', icon:'🏢', label:'توصيل للمكتب', price: officePrice },
+              ].map(({ k, icon, label, price }) => {
+                const active = deliveryType === k
+                const unavail = price === 0
+                return (
+                  <button key={k} onClick={() => !unavail && setDeliveryType(k)} style={{
+                    padding:'12px 10px', borderRadius:'12px', cursor: unavail ? 'not-allowed' : 'pointer',
+                    border:`2px solid ${active ? '#e63946' : '#e9ecef'}`,
+                    background: active ? 'rgba(230,57,70,0.06)' : unavail ? '#f8f9fa' : 'white',
+                    fontFamily:'Cairo, sans-serif', textAlign:'center',
+                    opacity: unavail ? 0.5 : 1, transition:'all 0.2s',
+                  }}>
+                    <div style={{ fontSize:'22px', marginBottom:'4px' }}>{icon}</div>
+                    <div style={{ fontSize:'13px', fontWeight:700, color: active ? '#e63946' : '#1a1a2e' }}>{label}</div>
+                    <div style={{ fontSize:'14px', fontWeight:900, color: freeShip && !unavail ? '#2a9d8f' : '#e63946', marginTop:'4px' }}>
+                      {unavail ? 'غير متاح' : freeShip ? 'مجاني 🚚' : `${price.toLocaleString('fr-DZ')} دج`}
+                    </div>
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
-        {selectedSize && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-            <span style={{ color: '#6c757d' }}>المقاس:</span>
-            <span style={{ fontWeight: 700 }}>{selectedSize}</span>
+
+        {/* ─── الكمية + رسالة التخفيض ─── */}
+        <div style={{ marginBottom:'16px' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+            <label style={{ fontSize:'13px', fontWeight:700 }}>الكمية</label>
+            <div style={{ display:'flex', background:'white', border:'2px solid #e9ecef', borderRadius:'12px', overflow:'hidden' }}>
+              <button onClick={() => setQty(q => Math.max(1, q-1))} style={{ width:'46px', height:'46px', border:'none', background:'rgba(230,57,70,0.06)', fontSize:'22px', fontWeight:700, cursor:'pointer', color:'#e63946', fontFamily:'Cairo, sans-serif' }}>−</button>
+              <span style={{ minWidth:'50px', textAlign:'center', fontSize:'20px', fontWeight:900, lineHeight:'46px', borderLeft:'1px solid #e9ecef', borderRight:'1px solid #e9ecef' }}>{qty}</span>
+              <button onClick={() => setQty(q => Math.min(10, q+1))} style={{ width:'46px', height:'46px', border:'none', background:'rgba(230,57,70,0.06)', fontSize:'22px', fontWeight:700, cursor:'pointer', color:'#e63946', fontFamily:'Cairo, sans-serif' }}>+</button>
+            </div>
           </div>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-          <span style={{ color: '#6c757d' }}>الكمية:</span>
-          <span style={{ fontWeight: 700 }}>x{qty}</span>
+          <DiscountHint qty={qty} rules={rules} price={product.price} />
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-          <span style={{ color: '#6c757d' }}>سعر المنتج:</span>
-          <span style={{ fontWeight: 700 }}>{productTotal.toLocaleString('fr-DZ')} دج</span>
-        </div>
-        {form.wilaya && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
-            <span style={{ color: '#6c757d' }}>سعر التوصيل ({deliveryType === 'home' ? 'منزل' : 'مكتب'}):</span>
-            <span style={{ fontWeight: 700 }}>{deliveryPrice.toLocaleString('fr-DZ')} دج</span>
+
+        {/* ─── ملخص الطلب ─── */}
+        <div style={{ background:'white', borderRadius:'14px', padding:'18px 20px', margin:'16px 0', border:'2px solid #e9ecef' }}>
+          <div style={{ fontSize:'14px', fontWeight:800, marginBottom:'12px', borderBottom:'1px solid #f0f0f0', paddingBottom:'10px' }}>📋 ملخص الطلب</div>
+          <SumRow label="المنتج" value={product.name} />
+          {colorName     && <SumRow label="اللون" value={colorName} />}
+          {selectedSize  && <SumRow label="المقاس" value={selectedSize} />}
+          <SumRow label={`${qty} × ${product.price.toLocaleString('fr-DZ')} دج`} value={`${subTotal.toLocaleString('fr-DZ')} دج`} />
+          {discAmt > 0   && <SumRow label={`🏷️ خصم الكمية (${discPct}%)`} value={`-${discAmt.toLocaleString('fr-DZ')} دج`} style={{ color:'#2a9d8f', fontWeight:800 }} />}
+          {hasGift       && <SumRow label="🎁 هدية مجانية" value="مضمّنة ✓" style={{ color:'#d4820a', fontWeight:700 }} />}
+          {form.wilaya   && <SumRow label={deliveryType === 'home' ? '🏠 توصيل للمنزل' : '🏢 توصيل للمكتب'} value={freeShip ? 'مجاني 🚚' : `${deliveryAmt.toLocaleString('fr-DZ')} دج`} style={freeShip ? { color:'#2a9d8f', fontWeight:700 } : {}} />}
+          <div style={{ borderTop:'2px solid #e9ecef', paddingTop:'12px', marginTop:'8px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <span style={{ fontSize:'14px', fontWeight:700, color:'#6c757d' }}>المجموع الإجمالي:</span>
+            <span style={{ fontSize:'28px', fontWeight:900, color:'#e63946' }}>{grandTotal.toLocaleString('fr-DZ')} دج</span>
           </div>
-        )}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '2px solid #e9ecef', paddingTop: '12px', marginTop: '8px' }}>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: '#6c757d' }}>المجموع الإجمالي:</span>
-          <span style={{ fontSize: '28px', fontWeight: 900, color: '#e63946' }}>{grandTotal.toLocaleString('fr-DZ')} دج</span>
         </div>
-=======
-      {/* Total */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'white', borderRadius: '14px', padding: '16px 20px', margin: '16px 0', border: '2px solid #e9ecef' }}>
-        <span style={{ fontSize: '14px', fontWeight: 700, color: '#6c757d' }}>المجموع الكلي:</span>
-        <span style={{ fontSize: '28px', fontWeight: 900 }}>{total.toLocaleString('fr-DZ')} دج</span>
->>>>>>> cb5518df428e73d67694a6dd1bbc9be4f85da86f
+
+        {error && <p style={{ color:'#e63946', fontSize:'13px', marginBottom:'12px' }}>{error}</p>}
+
+        <button onClick={handleSubmit} disabled={loading} style={{
+          width:'100%', padding:'18px',
+          background: loading ? '#ccc' : 'linear-gradient(135deg, #e63946, #c1121f)',
+          color:'white', border:'none', borderRadius:'14px',
+          fontFamily:'Cairo, sans-serif', fontSize:'17px', fontWeight:900,
+          cursor: loading ? 'not-allowed' : 'pointer',
+          boxShadow:'0 8px 24px rgba(230,57,70,0.3)', marginBottom:'16px',
+        }}>
+          {loading ? '⏳ جاري الإرسال...' : `🛒 اطلب الآن ${grandTotal.toLocaleString('fr-DZ')} دج — الدفع عند الاستلام`}
+        </button>
+
+        <div style={{ display:'flex', justifyContent:'center', gap:'20px', flexWrap:'wrap' }}>
+          {['🔒 معلوماتك آمنة', '📦 توصيل 2-5 أيام', '☎️ تأكيد هاتفي'].map(t => (
+            <span key={t} style={{ fontSize:'12px', color:'#6c757d', fontWeight:600 }}>{t}</span>
+          ))}
+        </div>
       </div>
-
-      {error && <p style={{ color: '#e63946', fontSize: '13px', marginBottom: '12px' }}>{error}</p>}
-
-      <button onClick={handleSubmit} disabled={loading} style={{
-        width: '100%', padding: '18px',
-        background: loading ? '#ccc' : 'linear-gradient(135deg, #e63946, #c1121f)',
-        color: 'white', border: 'none', borderRadius: '14px',
-        fontFamily: 'Cairo, sans-serif', fontSize: '17px', fontWeight: 900,
-        cursor: loading ? 'not-allowed' : 'pointer',
-        boxShadow: '0 8px 24px rgba(230,57,70,0.3)', marginBottom: '16px'
-      }}>
-        {loading ? '⏳ جاري الإرسال...' : '🛒 اطلب الآن — الدفع عند الاستلام'}
-      </button>
-
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', flexWrap: 'wrap' }}>
-        {['🔒 معلوماتك آمنة', '📦 توصيل 2-5 أيام', '☎️ تأكيد هاتفي'].map(t => (
-          <span key={t} style={{ fontSize: '12px', color: '#6c757d', fontWeight: 600 }}>{t}</span>
-        ))}
-      </div>
-    </div>
+    </>
   )
 }
