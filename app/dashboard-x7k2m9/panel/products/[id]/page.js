@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useRouter, useParams } from 'next/navigation'
+import DiscountRulesEditor from '@/components/admin/DiscountRulesEditor'
 
 const COLOR_PRESETS = [
   { label: 'أسود', value: '#1a1a2e' },
@@ -27,6 +28,7 @@ export default function EditProductPage() {
   const [colorImages, setColorImages] = useState({})
   const [colorImagePreviews, setColorImagePreviews] = useState({})
   const [uploadProgress, setUploadProgress] = useState('')
+  const [discountRules, setDiscountRules] = useState([])
 
   // جلب بيانات المنتج عند تحميل الصفحة
   useEffect(() => {
@@ -48,6 +50,7 @@ export default function EditProductPage() {
           images: data.images || []
         })
         setSelectedColors(data.colors || [])
+        setDiscountRules(data.discount_rules || [])
       }
     }
     fetchProduct()
@@ -110,7 +113,8 @@ export default function EditProductPage() {
         colors: selectedColors,
         sizes,
         images: newImages,
-        is_active: form.is_active
+        is_active: form.is_active,
+        discount_rules: discountRules,
       }).eq('id', id)
 
       if (error) throw error
@@ -263,6 +267,10 @@ export default function EditProductPage() {
             <input type="checkbox" id="active" checked={form.is_active} onChange={e => setForm(p => ({ ...p, is_active: e.target.checked }))} style={{ width: '18px', height: '18px', cursor: 'pointer' }} />
             <label htmlFor="active" style={{ fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>تفعيل المنتج (يظهر للزبائن)</label>
           </div>
+        </Card>
+
+        <Card title="🏷️ نظام التخفيض الذكي">
+          <DiscountRulesEditor rules={discountRules} onChange={setDiscountRules} />
         </Card>
 
         {uploadProgress && (
