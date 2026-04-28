@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import AdminLayout from '@/components/admin/AdminLayout'
 
-// تم إخراج Card إلى الخارج (حل مشكلة فقدان التركيز)
 function Card({ title, children }) {
   return (
     <div style={{
@@ -19,7 +18,6 @@ function Card({ title, children }) {
   )
 }
 
-// تعريف inputStyle كثابت خارج المكون (يمنع إعادة الإنشاء)
 const inputStyle = {
   padding: '12px 16px', border: '2px solid #e9ecef', borderRadius: '12px',
   fontFamily: 'Cairo, sans-serif', fontSize: '14px', width: '100%',
@@ -37,6 +35,9 @@ export default function SettingsPage() {
   })
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [deletingOrders, setDeletingOrders] = useState(false)
+  const [ordersCount, setOrdersCount] = useState(null)
+  const [deleteStatus, setDeleteStatus] = useState('')
 
   useEffect(() => {
     supabase.from('settings').select('*').then(({ data }) => {
@@ -46,11 +47,14 @@ export default function SettingsPage() {
         setSettings(prev => ({ ...prev, ...s }))
       }
     })
+    // جلب عدد الطلبات
+    supabase.from('orders').select('id', { count: 'exact', head: true }).then(({ count }) => {
+      setOrdersCount(count || 0)
+    })
   }, [])
 
   const save = async () => {
     setLoading(true)
-    // حفظ جميع الإعدادات باستخدام upsert لكل مفتاح
     const updates = Object.entries(settings).map(([key, value]) => ({ key, value }))
     for (const u of updates) {
       await supabase.from('settings').upsert(u, { onConflict: 'key' })
@@ -60,9 +64,42 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 3000)
   }
 
-  // دالة موحدة لتحديث الحالة (تمنع فقدان التركيز)
   const handleChange = (key, value) => {
     setSettings(prev => ({ ...prev, [key]: value }))
+  }
+
+  const deleteAllOrders = async () => {
+    if (!confirm(`⚠️ هل أنت متأكد؟\n\nسيتم حذف جميع الطلبات (${ordersCount}) نهائياً.\nلا يمكن التراجع عن هذا الإجراء.`)) return
+    const confirmText = prompt('اكتب "حذف" للتأكيد:')
+    if (confirmText !== 'حذف') { alert('تم الإلغاء'); return }
+
+    setDeletingOrders(true)
+    setDeleteStatus('جاري الحذف...')
+    const { error } = await supabase.from('orders').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    if (error) {
+      setDeleteStatus('❌ حدث خطأ: ' + error.message)
+    } else {
+      setOrdersCount(0)
+      setDeleteStatus('✅ تم حذف جميع الطلبات بنجاح')
+      setTimeout(() => setDeleteStatus(''), 4000)
+    }
+    setDeletingOrders(false)
+  }
+
+  const deleteOrdersByStatus = async (status, label) => {
+    const count = await supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', status)
+    const n = count.count || 0
+    if (n === 0) { alert(`لا توجد طلبات ${label}`); return }
+    if (!confirm(`هل تريد حذف ${n} طلب ${label} نهائياً؟`)) return
+
+    setDeletingOrders(true)
+    setDeleteStatus('جاري الحذف...')
+    await supabase.from('orders').delete().eq('status', status)
+    const { count: newCount } = await supabase.from('orders').select('id', { count: 'exact', head: true })
+    setOrdersCount(newCount || 0)
+    setDeleteStatus(`✅ تم حذف الطلبات ${label}`)
+    setTimeout(() => setDeleteStatus(''), 3000)
+    setDeletingOrders(false)
   }
 
   return (
@@ -108,8 +145,6 @@ export default function SettingsPage() {
         <p style={{ fontSize: '13px', color: '#6c757d', marginBottom: '20px' }}>
           ستظهر هذه الأيقونات في كل صفحات الموقع لتسهيل التواصل مع الزبائن
         </p>
-
-        {/* WhatsApp */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ fontSize: '13px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
             <span style={{ color: '#25D366' }}>●</span> رقم واتساب
@@ -127,7 +162,56 @@ export default function SettingsPage() {
               onChange={e => handleChange('whatsapp_number', e.target.value)} />
           </div>
         </div>
+      </Card>
 
+      {/* 🗑️ إدارة الطلبيات */}
+      <Card title="🗑️ إدارة الطلبيات">
+        <p style={{ fontSize: '13px', color: '#6c757d', marginBottom: '16px' }}>
+          حذف الطلبيات من قاعدة البيانات نهائياً — <strong style={{ color: '#e63946' }}>لا يمكن التراجع</strong>
+        </p>
+
+        <div style={{ background: '#f8f9fa', borderRadius: '12px', padding: '14px 18px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '14px', fontWeight: 600 }}>إجمالي الطلبيات الحالية:</span>
+          <span style={{ fontSize: '22px', fontWeight: 900, color: '#e63946' }}>{ordersCount ?? '...'}</span>
+        </div>
+
+        {deleteStatus && (
+          <div style={{ background: deleteStatus.startsWith('✅') ? '#f0fff4' : '#fff0f0', border: `2px solid ${deleteStatus.startsWith('✅') ? '#2a9d8f' : '#e63946'}`, borderRadius: '10px', padding: '12px 16px', marginBottom: '14px', fontSize: '14px', fontWeight: 700, color: deleteStatus.startsWith('✅') ? '#2a9d8f' : '#e63946' }}>
+            {deleteStatus}
+          </div>
+        )}
+
+        {/* حذف حسب الحالة */}
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, marginBottom: '10px', color: '#333' }}>حذف حسب الحالة:</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+            {[
+              { status: 'cancelled', label: 'الملغاة ❌', color: '#e63946' },
+              { status: 'shipped',   label: 'المشحونة 🚚', color: '#457b9d' },
+              { status: 'confirmed', label: 'المؤكدة ✅', color: '#2a9d8f' },
+              { status: 'pending',   label: 'قيد الانتظار 📵', color: '#e07b39' },
+            ].map(({ status, label, color }) => (
+              <button key={status} disabled={deletingOrders} onClick={() => deleteOrdersByStatus(status, label)} style={{
+                padding: '12px', background: 'white', color, border: `2px solid ${color}`,
+                borderRadius: '10px', fontFamily: 'Cairo, sans-serif', fontSize: '13px',
+                fontWeight: 700, cursor: deletingOrders ? 'not-allowed' : 'pointer', opacity: deletingOrders ? 0.6 : 1
+              }}>
+                حذف {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* حذف الكل */}
+        <button disabled={deletingOrders || ordersCount === 0} onClick={deleteAllOrders} style={{
+          width: '100%', padding: '14px', background: deletingOrders ? '#ccc' : '#e63946',
+          color: 'white', border: 'none', borderRadius: '12px',
+          fontFamily: 'Cairo, sans-serif', fontSize: '15px', fontWeight: 700,
+          cursor: (deletingOrders || ordersCount === 0) ? 'not-allowed' : 'pointer',
+          opacity: ordersCount === 0 ? 0.5 : 1
+        }}>
+          {deletingOrders ? '⏳ جاري الحذف...' : `🗑️ حذف جميع الطلبيات (${ordersCount ?? 0})`}
+        </button>
       </Card>
 
       <button onClick={save} disabled={loading} style={{
