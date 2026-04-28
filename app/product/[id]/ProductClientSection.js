@@ -363,7 +363,7 @@ export default function ProductClientSection({ product, settings, disc }) {
                 mainTxt=`أضف ${diff===1?'قطعة واحدة':diff+' قطع'} فقط للحصول على ${reward}!`
               } else if (activeRule) {
                 shimmer=true
-                bg=hasGift?'rgba(212,130,10,0.92)':'rgba(45,122,79,0.92)'
+                bg=hasGift?'rgba(212,130,10,0.92)':'rgba(192, 92, 10, 0.92)'
                 icon=hasGift?'🎁':freeShip?'🚚':'🏷️'
                 mainTxt=hasGift?'هدية مجانية + توصيل مجاني + خصم!':freeShip?`توصيل مجاني + خصم ${discPct}% مفعّل!`:`خصم ${discPct}% مفعّل على طلبك!`
                 subTxt=`وفّرت ${discAmt.toLocaleString('fr-DZ')} دج على هذا الطلب 🎉`
