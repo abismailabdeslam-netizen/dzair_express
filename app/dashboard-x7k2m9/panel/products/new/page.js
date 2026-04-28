@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { useRouter } from 'next/navigation'
 import AIGenerator from '@/components/AIGenerator'  // ✅ إضافة مولد الذكاء الاصطناعي
+import DiscountRulesEditor from '@/components/admin/DiscountRulesEditor'
 
 const PRODUCT_COLORS = [
   { label:'أسود',  value:'#1a1a2e' }, { label:'أحمر',  value:'#e63946' },
@@ -43,6 +44,7 @@ export default function NewProductPage() {
     stock:'100', sold:'0', sizes:'', is_active:true,
     theme_color:'#8B5E2A'
   })
+  const [discountRules, setDiscountRules] = useState([])
   const [selectedColors, setSelectedColors] = useState([])
   const [colorImages, setColorImages] = useState({})
   const [colorPreviews, setColorPreviews] = useState({})
@@ -124,7 +126,8 @@ export default function NewProductPage() {
         banner_images: bannerUrls,
         theme_color: form.theme_color,
         is_active: form.is_active,
-        main_image: mainImageUrl
+        main_image: mainImageUrl,
+        discount_rules: discountRules,
       })
       if (error) throw error
       router.push('/dashboard-x7k2m9/panel/products')
@@ -348,6 +351,10 @@ export default function NewProductPage() {
             <input type="checkbox" id="active" checked={form.is_active} onChange={e=>setForm(p=>({...p,is_active:e.target.checked}))} style={{ width:'18px', height:'18px', cursor:'pointer' }} />
             <label htmlFor="active" style={{ fontSize:'14px', fontWeight:600, cursor:'pointer' }}>تفعيل المنتج (يظهر للزبائن)</label>
           </div>
+        </Card>
+
+        <Card title="🏷️ نظام التخفيض الذكي">
+          <DiscountRulesEditor rules={discountRules} onChange={setDiscountRules} />
         </Card>
 
         {progress && (
