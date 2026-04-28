@@ -135,6 +135,18 @@ export default function ProductClientSection({ product, settings, disc }) {
     .success-card { background:white; border-radius:24px; padding:48px 28px; text-align:center; max-width:340px; width:100%; animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); border:2px solid ${border}; }
     @keyframes popIn { from{transform:scale(0.8);opacity:0} to{transform:scale(1);opacity:1} }
     @media(max-width:480px) { .lp-wrap { max-width:100%; } }
+    @keyframes dzShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    @keyframes dzBounce  { 0%,100%{transform:scale(1) rotate(0deg)} 25%{transform:scale(1.18) rotate(-6deg)} 75%{transform:scale(1.18) rotate(6deg)} }
+    @keyframes dzPulse   { 0%,100%{opacity:1} 50%{opacity:0.82} }
+    .disc-hint { border-radius:12px; overflow:hidden; margin-top:10px; position:relative; min-height:52px; display:flex; align-items:center; }
+    .disc-hint-shimmer { position:absolute; inset:0; z-index:1; background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.28) 40%,rgba(255,255,255,0.38) 50%,rgba(255,255,255,0.28) 60%,transparent 100%); background-size:200% 100%; animation:dzShimmer 2.5s infinite linear; }
+    .disc-hint-inner { position:relative; z-index:2; display:flex; align-items:center; gap:10px; padding:10px 14px; width:100%; }
+    .disc-hint-icon { font-size:22px; flex-shrink:0; }
+    .disc-hint-icon.bounce { animation:dzBounce 1.5s infinite ease-in-out; }
+    .disc-hint-main { font-size:13px; font-weight:900; }
+    .disc-hint-main.pulse { animation:dzPulse 2.5s infinite; }
+    .disc-hint-sub  { font-size:11px; font-weight:600; margin-top:2px; }
+    .disc-hint-save { font-size:13px; font-weight:900; white-space:nowrap; }
   `
 
   const [qty, setQty] = useState(1)
@@ -172,8 +184,17 @@ export default function ProductClientSection({ product, settings, disc }) {
     return () => observer.disconnect()
   }, [])
 
-  const total = product.price * qty
-  const grandTotal = total + deliveryPrice
+  // ─── حسابات نظام التخفيض ─────────────────────────────────────────────────
+  const discountRules = product.discount_rules || []
+  const activeRule    = [...discountRules].sort((a,b)=>b.minQty-a.minQty).find(r=>qty>=r.minQty) || null
+  const nextRule      = [...discountRules].sort((a,b)=>a.minQty-b.minQty).find(r=>qty<r.minQty)  || null
+  const discPct       = activeRule?.pct      || 0
+  const freeShip      = activeRule?.freeShip || false
+  const hasGift       = activeRule?.gift     || false
+  const total         = product.price * qty
+  const discAmt       = Math.round(total * discPct / 100)
+  const effectiveDel  = freeShip ? 0 : deliveryPrice
+  const grandTotal    = total - discAmt + effectiveDel
 
   const handleSubmit = async () => {
     if (!fname || !phone || !wilaya || !commune) { setError('يرجى ملء جميع الحقول'); return }
@@ -189,7 +210,8 @@ export default function ProductClientSection({ product, settings, disc }) {
         first_name: fname, last_name: '', phone, wilaya, commune,
         color: colorName, size: selectedSize,
         quantity: qty, total_price: grandTotal,
-        delivery_type: deliveryType, delivery_price: deliveryPrice,
+        delivery_type: deliveryType, delivery_price: effectiveDel,
+        discount_pct: discPct, discount_amount: discAmt, has_gift: hasGift,
         status: 'pending'
       })
 
@@ -322,13 +344,46 @@ export default function ProductClientSection({ product, settings, disc }) {
             </select>
           </div>
 
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'18px', marginTop:'6px' }}>
-            <span style={{ fontSize:'15px', fontWeight:700 }}>الكمية</span>
-            <div className="qty-ctrl">
-              <button className="qty-btn" onClick={()=>setQty(q=>Math.min(10,q+1))}>+</button>
-              <span className="qty-n">{String(qty).padStart(2,'0')}</span>
-              <button className="qty-btn" onClick={()=>setQty(q=>Math.max(1,q-1))}>−</button>
+          <div style={{ marginBottom:'10px', marginTop:'6px' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <span style={{ fontSize:'15px', fontWeight:700 }}>الكمية</span>
+              <div className="qty-ctrl">
+                <button className="qty-btn" onClick={()=>setQty(q=>Math.min(10,q+1))}>+</button>
+                <span className="qty-n">{String(qty).padStart(2,'0')}</span>
+                <button className="qty-btn" onClick={()=>setQty(q=>Math.max(1,q-1))}>−</button>
+              </div>
             </div>
+
+            {/* رسالة التخفيض — تحت الكمية مباشرة */}
+            {discountRules.length > 0 && (() => {
+              let bg='rgba(108,117,125,0.10)', shimmer=false, icon='🏷️', mainTxt='', subTxt='العرض محدود — استغل الفرصة', saveTxt=''
+              if (!activeRule && nextRule) {
+                const diff=nextRule.minQty-qty
+                const reward=nextRule.gift?'🎁 هدية':nextRule.freeShip?'🚚 توصيل مجاني':`خصم ${nextRule.pct}%`
+                mainTxt=`أضف ${diff===1?'قطعة واحدة':diff+' قطع'} فقط للحصول على ${reward}!`
+              } else if (activeRule) {
+                shimmer=true
+                bg=hasGift?'rgba(212,130,10,0.92)':'rgba(45,122,79,0.92)'
+                icon=hasGift?'🎁':freeShip?'🚚':'🏷️'
+                mainTxt=hasGift?'هدية مجانية + توصيل مجاني + خصم!':freeShip?`توصيل مجاني + خصم ${discPct}% مفعّل!`:`خصم ${discPct}% مفعّل على طلبك!`
+                subTxt=`وفّرت ${discAmt.toLocaleString('fr-DZ')} دج على هذا الطلب 🎉`
+                saveTxt=nextRule?`+${nextRule.minQty-qty} للمزيد`:'🏆 أفضل عرض!'
+              }
+              if (!mainTxt) return null
+              return (
+                <div className="disc-hint" style={{ background:bg, marginBottom:'12px' }}>
+                  {shimmer && <div className="disc-hint-shimmer"/>}
+                  <div className="disc-hint-inner">
+                    <div className={`disc-hint-icon${shimmer?' bounce':''}`}>{icon}</div>
+                    <div style={{ flex:1 }}>
+                      <div className={`disc-hint-main${shimmer?' pulse':''}`} style={{ color:shimmer?'white':'#333' }}>{mainTxt}</div>
+                      <div className="disc-hint-sub" style={{ color:shimmer?'rgba(255,255,255,0.88)':'#666' }}>{subTxt}</div>
+                    </div>
+                    {saveTxt && <div className="disc-hint-save" style={{ color:'white' }}>{saveTxt}</div>}
+                  </div>
+                </div>
+              )
+            })()}
           </div>
 
           {/* Delivery Type */}
@@ -343,7 +398,7 @@ export default function ProductClientSection({ product, settings, disc }) {
                 }}>
                   <div style={{ fontSize:'20px', marginBottom:'3px' }}>🏠</div>
                   <div style={{ fontSize:'12px', fontWeight:700, color:deliveryType==='home'?c1:'#1a1a2e' }}>للمنزل</div>
-                  <div style={{ fontSize:'13px', fontWeight:900, color:c1, marginTop:'3px' }}>{homeDeliveryPrice.toLocaleString('fr-DZ')} دج</div>
+                  <div style={{ fontSize:'13px', fontWeight:900, color:c1, marginTop:'3px' }}>{freeShip?'مجاني 🚚':homeDeliveryPrice.toLocaleString('fr-DZ')+' دج'}</div>
                 </button>
                 <button onClick={()=>officeDeliveryPrice>0&&setDeliveryType('office')} style={{
                   padding:'12px 8px', borderRadius:'12px', border:`2px solid ${deliveryType==='office'?c1:'#e9ecef'}`,
@@ -354,7 +409,7 @@ export default function ProductClientSection({ product, settings, disc }) {
                   <div style={{ fontSize:'20px', marginBottom:'3px' }}>🏢</div>
                   <div style={{ fontSize:'12px', fontWeight:700, color:deliveryType==='office'?c1:'#1a1a2e' }}>للمكتب</div>
                   <div style={{ fontSize:'13px', fontWeight:900, color:c1, marginTop:'3px' }}>
-                    {officeDeliveryPrice>0?`${officeDeliveryPrice.toLocaleString('fr-DZ')} دج`:'غير متاح'}
+                    {officeDeliveryPrice===0?'غير متاح':freeShip?'مجاني 🚚':`${officeDeliveryPrice.toLocaleString('fr-DZ')} دج`}
                   </div>
                 </button>
               </div>
@@ -393,10 +448,21 @@ export default function ProductClientSection({ product, settings, disc }) {
                   </div>
                   <div style={{ fontWeight:900, fontSize:'14px', color:c2 }}>{total.toLocaleString('fr-DZ')} دج</div>
                 </div>
+                {discAmt > 0 && (
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:'13px', marginBottom:'8px', color:'#2a9d8f', fontWeight:800 }}>
+                    <span>🏷️ خصم الكمية ({discPct}%)</span>
+                    <span>-{discAmt.toLocaleString('fr-DZ')} دج</span>
+                  </div>
+                )}
+                {hasGift && (
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:'13px', marginBottom:'8px', color:'#d4820a', fontWeight:700 }}>
+                    <span>🎁 هدية مجانية</span><span>مضمّنة ✓</span>
+                  </div>
+                )}
                 {wilaya && (
-                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:'13px', marginBottom:'8px', color:'#8B6B4A' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:'13px', marginBottom:'8px', color: freeShip?'#2a9d8f':'#8B6B4A', fontWeight: freeShip?700:'normal' }}>
                     <span>سعر التوصيل ({deliveryType==='home'?'منزل':'مكتب'}):</span>
-                    <span style={{ fontWeight:700 }}>{deliveryPrice.toLocaleString('fr-DZ')} دج</span>
+                    <span style={{ fontWeight:700 }}>{freeShip?'مجاني 🚚':effectiveDel.toLocaleString('fr-DZ')+' دج'}</span>
                   </div>
                 )}
                 <div className="sum-total">
