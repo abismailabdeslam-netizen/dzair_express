@@ -239,7 +239,27 @@ export default function OrdersPage() {
                         <span style={{ fontWeight: 700 }}>{o.delivery_price?.toLocaleString('fr-DZ')} دج</span>
                       </div>
                     )}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #e9ecef' }}>
+                    {/* ── شارات التخفيض ── */}
+                    {(o.discount_pct > 0 || o.has_gift || o.delivery_price === 0) && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #e9ecef' }}>
+                        {o.discount_pct > 0 && (
+                          <span style={{ background: 'rgba(42,157,143,0.12)', color: '#2a9d8f', border: '1px solid rgba(42,157,143,0.3)', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 800 }}>
+                            🏷️ خصم {o.discount_pct}% — وفّر {o.discount_amount?.toLocaleString('fr-DZ')} دج
+                          </span>
+                        )}
+                        {o.delivery_price === 0 && o.wilaya && (
+                          <span style={{ background: 'rgba(69,123,157,0.12)', color: '#457b9d', border: '1px solid rgba(69,123,157,0.3)', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 800 }}>
+                            🚚 توصيل مجاني
+                          </span>
+                        )}
+                        {o.has_gift && (
+                          <span style={{ background: 'rgba(212,130,10,0.12)', color: '#d4820a', border: '1px solid rgba(212,130,10,0.3)', padding: '3px 10px', borderRadius: '20px', fontSize: '11px', fontWeight: 800 }}>
+                            🎁 هدية مجانية
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e9ecef' }}>
                       <span style={{ color: '#6c757d' }}>الإجمالي:</span>
                       <span style={{ fontWeight: 900, color: '#e63946', fontSize: '16px' }}>{o.total_price?.toLocaleString('fr-DZ')} دج</span>
                     </div>
@@ -287,7 +307,7 @@ export default function OrdersPage() {
                     <input type="checkbox" checked={selected.length === byProduct.length && byProduct.length > 0}
                       onChange={toggleAll} style={{ width: '16px', height: '16px', cursor: 'pointer' }} />
                   </th>
-                  {['الاسم','الهاتف','الولاية','المنتج','الكمية','التوصيل','الإجمالي','الحالة','إجراء'].map(h => (
+                  {['الاسم','الهاتف','الولاية','المنتج','الكمية','التوصيل','العروض','الإجمالي','الحالة','إجراء'].map(h => (
                     <th key={h} style={{ padding: '14px 16px', textAlign: 'right', fontSize: '13px', fontWeight: 700, color: '#6c757d', borderBottom: '1px solid #e9ecef' }}>{h}</th>
                   ))}
                 </tr>
@@ -310,6 +330,29 @@ export default function OrdersPage() {
                       <td style={{ padding: '14px 16px', fontSize: '13px' }}>{o.product_name}</td>
                       <td style={{ padding: '14px 16px', textAlign: 'center' }}>{o.quantity}</td>
                       <td style={{ padding: '14px 16px', fontSize: '12px' }}>{o.delivery_type === 'home' ? '🏠 منزل' : o.delivery_type === 'office' ? '🏢 مكتب' : '—'}</td>
+                      <td style={{ padding: '10px 16px' }}>
+                        {(o.discount_pct > 0 || o.has_gift || o.delivery_price === 0) ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {o.discount_pct > 0 && (
+                              <span style={{ background: 'rgba(42,157,143,0.12)', color: '#2a9d8f', border: '1px solid rgba(42,157,143,0.3)', padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                                🏷️ -{o.discount_pct}% ({o.discount_amount?.toLocaleString('fr-DZ')} دج)
+                              </span>
+                            )}
+                            {o.delivery_price === 0 && o.wilaya && (
+                              <span style={{ background: 'rgba(69,123,157,0.12)', color: '#457b9d', border: '1px solid rgba(69,123,157,0.3)', padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                                🚚 توصيل مجاني
+                              </span>
+                            )}
+                            {o.has_gift && (
+                              <span style={{ background: 'rgba(212,130,10,0.12)', color: '#d4820a', border: '1px solid rgba(212,130,10,0.3)', padding: '2px 8px', borderRadius: '20px', fontSize: '11px', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                                🎁 هدية
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span style={{ color: '#ccc', fontSize: '13px' }}>—</span>
+                        )}
+                      </td>
                       <td style={{ padding: '14px 16px', fontWeight: 700 }}>{o.total_price?.toLocaleString('fr-DZ')} دج</td>
                       <td style={{ padding: '14px 16px' }}><span style={{ padding: '4px 10px', borderRadius: '50px', fontSize: '12px', fontWeight: 700, background: st.bg, color: st.color, whiteSpace: 'nowrap' }}>{st.label}</span></td>
                       <td style={{ padding: '14px 16px' }}>
