@@ -1,10 +1,10 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { WILAYAS_COMMUNES, WILAYAS } from '@/lib/wilayas'
 
-// ─── أسعار التوصيل لكل ولاية [منزل، مكتب] ───────────────────────────────────
-const DELIVERY_PRICES = {
+// ─── أسعار افتراضية احتياطية (تُستخدم إذا لم يكن هناك إعداد مفعّل) ────────────
+const FALLBACK_PRICES = {
   '01 - أدرار': [1150, 850], '02 - الشلف': [800, 400], '03 - الأغواط': [900, 450],
   '04 - أم البواقي': [700, 300], '05 - باتنة': [700, 300], '06 - بجاية': [700, 300],
   '07 - بسكرة': [900, 450], '08 - بشار': [1000, 750], '09 - البليدة': [750, 350],
@@ -138,13 +138,28 @@ export default function OrderForm({ product, selectedColor, selectedSize }) {
   const [loading,      setLoading]      = useState(false)
   const [success,      setSuccess]      = useState(false)
   const [error,        setError]        = useState('')
+  const [deliveryPrices, setDeliveryPrices] = useState(FALLBACK_PRICES)
+
+  // ─── جلب إعداد التوصيل المفعّل من Supabase ───────────────────────────────────
+  useEffect(() => {
+    supabase
+      .from('delivery_configs')
+      .select('prices')
+      .eq('is_active', true)
+      .single()
+      .then(({ data }) => {
+        if (data?.prices && Object.keys(data.prices).length > 0) {
+          setDeliveryPrices(data.prices)
+        }
+      })
+  }, [])
 
   const rules      = product.discount_rules || []
   const colorName  = selectedColor ? (COLOR_NAMES[selectedColor] || selectedColor) : null
   const communes   = form.wilaya ? (WILAYAS_COMMUNES[form.wilaya] || []) : []
 
   // حسابات السعر
-  const delPrices    = form.wilaya ? (DELIVERY_PRICES[form.wilaya] || [0, 0]) : [0, 0]
+  const delPrices    = form.wilaya ? (deliveryPrices[form.wilaya] || [0, 0]) : [0, 0]
   const homePrice    = delPrices[0]
   const officePrice  = delPrices[1]
   const activeRule   = calcDiscount(qty, rules)
