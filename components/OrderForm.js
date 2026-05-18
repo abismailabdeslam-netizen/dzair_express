@@ -180,6 +180,15 @@ export default function OrderForm({ product, selectedColor, selectedSize }) {
       })
       if (err) throw err
       setSuccess(true)
+
+      // إرسال حدث الشراء لـ TikTok Pixel
+      if (typeof window !== 'undefined' && window.ttq) {
+        window.ttq.track('PlaceAnOrder', {
+          value: grandTotal,
+          currency: 'DZD',
+          contents: [{ content_name: product.name, quantity: qty }],
+        })
+      }
     } catch { setError('حدث خطأ، حاول مجدداً') }
     finally   { setLoading(false) }
   }
