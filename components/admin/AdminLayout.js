@@ -8,6 +8,7 @@ const NAV = [
   { href: '/dashboard-x7k2m9/panel/orders',   icon: '📋', label: 'الطلبات' },
   { href: '/dashboard-x7k2m9/panel/products', icon: '📦', label: 'المنتجات' },
   { href: '/dashboard-x7k2m9/panel/reviews',  icon: '⭐', label: 'التقييمات' },
+  { href: '/dashboard-x7k2m9/panel/delivery',  icon: '🚚', label: 'التوصيل' },
   { href: '/dashboard-x7k2m9/panel/settings', icon: '⚙️', label: 'الإعدادات' },
 ]
 
